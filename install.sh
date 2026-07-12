@@ -2,8 +2,8 @@
 # install.sh — one-line installer for sortd
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/royalturd/sortd/main/install.sh | sh
-#   wget -qO- https://raw.githubusercontent.com/royalturd/sortd/main/install.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/royalturd/sortd/master/install.sh | sh
+#   wget -qO- https://raw.githubusercontent.com/royalturd/sortd/master/install.sh | sh
 
 set -e
 
@@ -16,7 +16,7 @@ info()  { printf "%b\n" "${BLUE}$1${NC}"; }
 ok()    { printf "%b\n" "${GREEN}$1${NC}"; }
 die()   { printf "%b\n" "${RED}Error: $1${NC}" >&2; exit 1; }
 
-RAW_URL="https://raw.githubusercontent.com/${REPO}/main/${BINARY}.sh"
+RAW_URL="https://raw.githubusercontent.com/${REPO}/master/${BINARY}.sh"
 
 info "Installing ${BOLD}sortd${NC}..."
 

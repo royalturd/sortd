@@ -49,19 +49,19 @@
 ### One-liner (recommended)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/royalturd/sortd/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/royalturd/sortd/master/install.sh | sh
 ```
 
 Or with `wget`:
 
 ```bash
-wget -qO- https://raw.githubusercontent.com/royalturd/sortd/main/install.sh | sh
+wget -qO- https://raw.githubusercontent.com/royalturd/sortd/master/install.sh | sh
 ```
 
 Installs to `~/.local/bin/sortd` by default. Override the directory:
 
 ```bash
-INSTALL_DIR=/usr/local/bin curl -fsSL https://raw.githubusercontent.com/royalturd/sortd/main/install.sh | sh
+INSTALL_DIR=/usr/local/bin curl -fsSL https://raw.githubusercontent.com/royalturd/sortd/master/install.sh | sh
 ```
 
 ### bpkg
