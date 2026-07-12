@@ -4,7 +4,7 @@
 
 **A zero-dependency shell utility that sorts chaotic directories into tidy category sub-folders.**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 [![Shell: POSIX sh](https://img.shields.io/badge/Shell-POSIX%20sh-89e051.svg)](#)
 [![Version](https://img.shields.io/badge/version-2.0.0-orange.svg)](#)
 [![CI](https://github.com/royalturd/sortd/actions/workflows/ci.yml/badge.svg)](https://github.com/royalturd/sortd/actions/workflows/ci.yml)

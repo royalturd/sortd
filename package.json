@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "description": "Sort a messy directory into tidy category sub-folders",
   "homepage": "https://github.com/royalturd/sortd",
-  "license": "MIT",
+  "license": "GPL-3.0",
   "scripts": {
     "install": "install.sh",
     "test": "test/test.sh"
