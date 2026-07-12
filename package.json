@@ -1,0 +1,14 @@
+{
+  "name": "sortd",
+  "version": "2.0.0",
+  "description": "Sort a messy directory into tidy category sub-folders",
+  "homepage": "https://github.com/royalturd/sortd",
+  "license": "MIT",
+  "scripts": {
+    "install": "install.sh",
+    "test": "test/test.sh"
+  },
+  "files": [
+    "sortd.sh"
+  ]
+}

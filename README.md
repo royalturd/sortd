@@ -1,106 +1,172 @@
-# organize-me 📁
+<div align="center">
 
-An ultra-lightweight shell utility that automatically organizes chaotic directories into neatly structured category folders. It features a responsive Terminal User Interface (TUI), dynamic progress calculations, duplicate safeguards, a dry-run preview mode, and a force-overwrite mode.
+# 📁 sortd
 
-## 🚀 Features
+**A zero-dependency shell utility that sorts chaotic directories into tidy category sub-folders.**
 
-- **Dynamic Selection**: Pass a directory as an argument, or let the interactive prompt guide you with path expansion support.
-- **TUI & Progress Bar**: Real-time in-place updating progress meter with Unicode block characters in UTF-8 terminals.
-- **Smart Duplicate Safe-Guard**: Prevents accidental data loss by appending unique `_YYYYMMDD_HHMMSS` timestamps to matching filenames.
-- **Force Mode (`-f` / `--force`)**: Skip the safeguard and cleanly overwrite existing duplicates.
-- **Dry-Run Mode (`-n` / `--dry-run`)**: Preview exactly what *would* be moved without touching a single file.
-- **Verbose Mode (`-v` / `--verbose`)**: Print each file action (move / rename / overwrite) as it happens.
-- **Self-Aware**: Automatically skips the script itself if it lives inside the target directory.
-- **Comprehensive File Mapping**: Categorizes dozens of file types out of the box.
-- **Safe Cleanup**: Uses a `trap` to remove temp files even on Ctrl-C or unexpected exits.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Shell: POSIX sh](https://img.shields.io/badge/Shell-POSIX%20sh-89e051.svg)](#)
+[![Version](https://img.shields.io/badge/version-2.0.0-orange.svg)](#)
+[![CI](https://github.com/royalturd/sortd/actions/workflows/ci.yml/badge.svg)](https://github.com/royalturd/sortd/actions/workflows/ci.yml)
 
-## 🛠️ File Organization Rules
+</div>
 
-The script automatically maps files into the following directories:
+---
 
-| Folder        | File Extensions |
-|---------------|-----------------|
-| Documents     | `.md` `.txt` `.pdf` `.rtf` `.doc` `.docx` `.odt` |
-| Spreadsheets  | `.csv` `.xls` `.xlsx` `.ods` |
-| Presentations | `.ppt` `.pptx` `.odp` |
-| Code          | `.json` `.xml` `.yaml` `.yml` `.html` `.css` `.js` `.ts` `.py` `.sh` `.c` `.cpp` `.go` `.rs` `.java` `.rb` `.php` `.swift` `.kt` `.lua` `.r` `.pl` `.toml` `.ini` `.cfg` `.env` |
-| Images        | `.jpg` `.jpeg` `.png` `.gif` `.svg` `.webp` `.bmp` `.ico` `.psd` `.ai` `.tiff` `.heic` `.avif` `.raw` `.cr2` `.nef` |
-| Audio         | `.mp3` `.wav` `.flac` `.m4a` `.ogg` `.aac` `.opus` `.wma` `.aiff` |
-| Videos        | `.mp4` `.mkv` `.mov` `.avi` `.wmv` `.flv` `.webm` `.m4v` `.3gp` |
-| Archives      | `.zip` `.tar` `.gz` `.rar` `.7z` `.tgz` `.bz2` `.xz` `.zst` `.lz4` |
-| Packages      | `.deb` `.rpm` `.pkg` `.dmg` `.msi` `.exe` `.appimage` `.flatpak` `.snap` |
-| Other         | Everything else |
+## Features
 
-## 📦 Installation
+- **Interactive directory picker** — numbered menu of common dirs, with a "browse all" mode that leverages `fzf` when available
+- **Real-time progress bar** — Unicode block characters in UTF-8 terminals, ASCII fallback elsewhere
+- **Duplicate safeguard** — appends a `_YYYYMMDD_HHMMSS` timestamp instead of silently overwriting
+- **Force mode** — explicitly opt-in to overwrite duplicates
+- **Dry-run mode** — preview every action before committing
+- **Verbose mode** — print each `MOVE`, `RENAME`, or `OVERWRITE` as it happens
+- **Self-aware** — skips itself if the script lives inside the target directory
+- **Safe cleanup** — `trap` removes temp files even on Ctrl-C or unexpected exits
+- **No dependencies** — pure POSIX `sh`; `fzf` is optional
 
-To make the script globally executable on your system:
+---
 
-1. Clone or download the script file.
-2. Make it executable:
-   ```bash
-   chmod +x organize-me
-   ```
-3. Move it to a directory in your system `$PATH` (e.g., `~/.local/bin` or `/usr/local/bin`):
-   ```bash
-   mv organize-me ~/.local/bin/
-   ```
+## File Categories
 
-## 💡 Usage
+| Folder          | Extensions |
+|-----------------|------------|
+| `Documents`     | `.md` `.txt` `.pdf` `.rtf` `.doc` `.docx` `.odt` |
+| `Spreadsheets`  | `.csv` `.xls` `.xlsx` `.ods` |
+| `Presentations` | `.ppt` `.pptx` `.odp` |
+| `Code`          | `.json` `.xml` `.yaml` `.yml` `.html` `.css` `.js` `.ts` `.py` `.sh` `.c` `.cpp` `.go` `.rs` `.java` `.rb` `.php` `.swift` `.kt` `.lua` `.r` `.pl` `.toml` `.ini` `.cfg` `.env` |
+| `Images`        | `.jpg` `.jpeg` `.png` `.gif` `.svg` `.webp` `.bmp` `.ico` `.psd` `.ai` `.tiff` `.heic` `.avif` `.raw` `.cr2` `.nef` |
+| `Audio`         | `.mp3` `.wav` `.flac` `.m4a` `.ogg` `.aac` `.opus` `.wma` `.aiff` |
+| `Videos`        | `.mp4` `.mkv` `.mov` `.avi` `.wmv` `.flv` `.webm` `.m4v` `.3gp` |
+| `Archives`      | `.zip` `.tar` `.gz` `.rar` `.7z` `.tgz` `.bz2` `.xz` `.zst` `.lz4` |
+| `Packages`      | `.deb` `.rpm` `.pkg` `.dmg` `.msi` `.exe` `.appimage` `.flatpak` `.snap` |
+| `Other`         | Everything else |
 
-### Interactive Mode
+---
 
-Run the tool directly to be prompted for a directory:
+## Installation
+
+### One-liner (recommended)
 
 ```bash
-organize-me
+curl -fsSL https://raw.githubusercontent.com/royalturd/sortd/main/install.sh | sh
 ```
 
-### Direct Target Mode
-
-Pass the directory path as the first parameter:
+Or with `wget`:
 
 ```bash
-organize-me ~/Downloads
+wget -qO- https://raw.githubusercontent.com/royalturd/sortd/main/install.sh | sh
 ```
 
-### Dry-Run Mode
-
-Preview what would happen without moving anything:
+Installs to `~/.local/bin/sortd` by default. Override the directory:
 
 ```bash
-organize-me ~/Downloads --dry-run
-# Short form:
-organize-me ~/Downloads -n
+INSTALL_DIR=/usr/local/bin curl -fsSL https://raw.githubusercontent.com/royalturd/sortd/main/install.sh | sh
 ```
 
-### Verbose Mode
-
-Print each file action as it occurs:
+### bpkg
 
 ```bash
-organize-me ~/Downloads --verbose
-# Combine with dry-run for a full preview:
-organize-me ~/Downloads -n -v
+bpkg install royalturd/sortd
 ```
 
-### Force Overwrite Mode
-
-Overwrite existing files in target folders instead of renaming with a timestamp:
+### Basher
 
 ```bash
-organize-me ~/Downloads -f
-# OR
-organize-me ~/Downloads --force
+basher install royalturd/sortd
 ```
 
-## ⚙️ All Options
+### Manual
+
+```bash
+git clone https://github.com/royalturd/sortd.git
+cd sortd
+chmod +x sortd.sh install.sh
+cp sortd.sh ~/.local/bin/sortd
+```
+
+---
+
+## Usage
+
+### Interactive mode
+
+Running without arguments opens a directory picker:
+
+```bash
+sortd
+```
 
 ```
-Usage: organize-me [DIRECTORY] [OPTIONS]
+sortd — select a directory to organize
 
-Options:
-  -f, --force     Overwrite existing files instead of timestamping duplicates.
-  -n, --dry-run   Preview what would be moved; no files are touched.
-  -v, --verbose   Print each file action as it happens.
-  -h, --help      Show this help message and exit.
+  1) /home/user/Downloads
+  2) /home/user/Desktop
+  3) /home/user/Documents
+  a) Browse all directories
+  m) Enter path manually
+
+Choice:
 ```
+
+Choosing **`a`** opens a fuzzy `fzf` browser (if installed) or a full numbered list of every directory under `$HOME`.
+
+---
+
+### Direct mode
+
+```bash
+sortd ~/Downloads
+```
+
+### Dry-run — preview without moving anything
+
+```bash
+sortd ~/Downloads --dry-run
+```
+
+### Verbose — print every action
+
+```bash
+sortd ~/Downloads --verbose
+```
+
+### Force — overwrite duplicates instead of timestamping
+
+```bash
+sortd ~/Downloads --force
+```
+
+### Combine flags
+
+```bash
+sortd ~/Downloads -nv    # dry-run + verbose: full preview
+sortd ~/Downloads -fv    # force  + verbose: overwrite with log
+```
+
+---
+
+## Options
+
+| Flag | Long form | Description |
+|------|-----------|-------------|
+| `-f` | `--force` | Overwrite existing files instead of renaming with a timestamp |
+| `-n` | `--dry-run` | Preview all actions; no files are moved |
+| `-v` | `--verbose` | Print each `MOVE` / `RENAME` / `OVERWRITE` action |
+| `-h` | `--help` | Show help and exit |
+
+---
+
+## Requirements
+
+| Tool | Required | Notes |
+|------|----------|-------|
+| `sh` | ✅ Yes | Any POSIX-compatible shell |
+| `find` | ✅ Yes | Standard on all Unix-like systems |
+| `fzf` | ⬜ Optional | Enables the fuzzy directory browser |
+
+---
+
+## License
+
+[MIT](LICENSE)
