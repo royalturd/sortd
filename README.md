@@ -144,6 +144,16 @@ sortd ~/Downloads -nv    # dry-run + verbose: full preview
 sortd ~/Downloads -fv    # force  + verbose: overwrite with log
 ```
 
+### Updating the tool
+
+`sortd` automatically checks for updates in the background when run interactively. If a newer version is found on GitHub, it will prompt you if you want to download and install it.
+
+You can also force an immediate check/update using:
+
+```bash
+sortd --update
+```
+
 ---
 
 ## Options
@@ -153,6 +163,7 @@ sortd ~/Downloads -fv    # force  + verbose: overwrite with log
 | `-f` | `--force` | Overwrite existing files instead of renaming with a timestamp |
 | `-n` | `--dry-run` | Preview all actions; no files are moved |
 | `-v` | `--verbose` | Print each `MOVE` / `RENAME` / `OVERWRITE` action |
+| `-u` | `--update` | Update `sortd` to the latest version from GitHub |
 | `-h` | `--help` | Show help and exit |
 
 ---
@@ -169,4 +180,4 @@ sortd ~/Downloads -fv    # force  + verbose: overwrite with log
 
 ## License
 
-[MIT](LICENSE)
+[GPL-3.0](LICENSE)

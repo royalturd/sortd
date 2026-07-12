@@ -34,11 +34,14 @@ if [ -t 1 ]; then
     GREEN='\033[1;32m'
     YELLOW='\033[1;33m'
     BLUE='\033[1;34m'
+    MAGENTA='\033[1;35m'
+    CYAN='\033[1;36m'
+    WHITE='\033[1;37m'
     BOLD='\033[1m'
     DIM='\033[2m'
     NC='\033[0m'
 else
-    RED=''; GREEN=''; YELLOW=''; BLUE=''; BOLD=''; DIM=''; NC=''
+    RED=''; GREEN=''; YELLOW=''; BLUE=''; MAGENTA=''; CYAN=''; WHITE=''; BOLD=''; DIM=''; NC=''
 fi
 
 # ---------------------------------------------------------------------------
@@ -52,8 +55,57 @@ ok()            { printf "%b\n" "${GREEN}$1${NC}"; }
 verbose()       { [ "$VERBOSE" = true ] && printf "%b\n" "${DIM}  $1${NC}"; return 0; }
 
 # ---------------------------------------------------------------------------
-# Help
+# Help & Update
 # ---------------------------------------------------------------------------
+
+update_tool() {
+    SELF_PATH=$(cd "$(dirname "$0")" 2>/dev/null && pwd)/$(basename "$0")
+    if [ ! -w "$SELF_PATH" ]; then
+        die "No write permission to update $SELF_PATH. Try running with sudo if installed globally."
+    fi
+
+    info "Checking for updates..."
+    URL="https://raw.githubusercontent.com/royalturd/sortd/master/sortd.sh"
+    tmpfile=$(mktemp 2>/dev/null) || die "Cannot create temp file for update."
+
+    if command -v curl >/dev/null 2>&1; then
+        curl -fsSL "$URL" -o "$tmpfile" || die "Failed to download update."
+    elif command -v wget >/dev/null 2>&1; then
+        wget -qO "$tmpfile" "$URL" || die "Failed to download update."
+    else
+        die "curl or wget is required to update."
+    fi
+
+    mv "$tmpfile" "$SELF_PATH"
+    chmod +x "$SELF_PATH"
+    ok "sortd updated successfully to the latest version!"
+    exit 0
+}
+
+check_for_update() {
+    [ -t 0 ] || return 0
+    [ -t 1 ] || return 0
+    [ "$DRY_RUN" = true ] && return 0
+
+    URL="https://raw.githubusercontent.com/royalturd/sortd/master/sortd.sh"
+    remote_version=""
+    if command -v curl >/dev/null 2>&1; then
+        remote_version=$(curl -fsSL --connect-timeout 2 --max-time 3 "$URL" 2>/dev/null | grep "^VERSION=" | head -n 1 | cut -d'"' -f2)
+    elif command -v wget >/dev/null 2>&1; then
+        remote_version=$(wget -T 2 -t 1 -qO- "$URL" 2>/dev/null | grep "^VERSION=" | head -n 1 | cut -d'"' -f2)
+    fi
+
+    if [ -n "$remote_version" ] && [ "$remote_version" != "$VERSION" ]; then
+        printf "\n%b✨ A new version of sortd is available: v%s (Current: v%s)%b\n" "${GREEN}" "$remote_version" "$VERSION" "${NC}" >&2
+        printf "%bWould you like to update now? (y/N): %b" "${BOLD}${WHITE}" "${NC}" >&2
+        read -r answer
+        case "$answer" in
+            [yY]|[yY][eE][sS])
+                update_tool
+                ;;
+        esac
+    fi
+}
 
 usage() {
     cat <<EOF
@@ -66,6 +118,7 @@ ${BOLD}Options:${NC}
   -f, --force     Overwrite existing files instead of timestamping duplicates
   -n, --dry-run   Preview changes without moving any files
   -v, --verbose   Print each file action as it happens
+  -u, --update    Update sortd to the latest version from GitHub
   -h, --help      Show this help message and exit
 
 ${BOLD}Examples:${NC}
@@ -85,6 +138,7 @@ while [ "$#" -gt 0 ]; do
         -f|--force)   FORCE_MODE=true ;;
         -n|--dry-run) DRY_RUN=true ;;
         -v|--verbose) VERBOSE=true ;;
+        -u|--update)  update_tool ;;
         -h|--help)    usage; exit 0 ;;
         --)           shift; break ;;
         -*)
@@ -100,20 +154,40 @@ while [ "$#" -gt 0 ]; do
     shift
 done
 
+check_for_update
+
 # ---------------------------------------------------------------------------
 # Interactive directory picker
 # ---------------------------------------------------------------------------
+
+_format_path_line() {
+    path=$1
+    case "$path" in
+        *"/Downloads") printf "%b" "${BLUE}📥 Downloads${NC}  ${DIM}($path)${NC}" ;;
+        *"/Desktop")   printf "%b" "${YELLOW}🖥️  Desktop${NC}    ${DIM}($path)${NC}" ;;
+        *"/Documents") printf "%b" "${CYAN}📄 Documents${NC}  ${DIM}($path)${NC}" ;;
+        *"/Pictures")  printf "%b" "${MAGENTA}🖼️  Pictures${NC}   ${DIM}($path)${NC}" ;;
+        *"/Videos")    printf "%b" "${RED}🎬 Videos${NC}     ${DIM}($path)${NC}" ;;
+        *"/Music")     printf "%b" "${GREEN}🎵 Music${NC}      ${DIM}($path)${NC}" ;;
+        "$(pwd)")      printf "%b" "${GREEN}${BOLD}✨ Current Dir${NC}  ${DIM}($path)${NC}" ;;
+        *)             printf "%b" "${WHITE}📁 $(basename "$path")${NC}  ${DIM}($path)${NC}" ;;
+    esac
+}
 
 _menu_pick() {
     listfile=$1
     total=$(wc -l < "$listfile" | tr -d ' ')
     i=1
     while [ "$i" -le "$total" ]; do
-        printf "  %b%d)%b %s\n" "$BOLD" "$i" "$NC" "$(sed -n "${i}p" "$listfile")"
+        path=$(sed -n "${i}p" "$listfile")
+        printf "  %b%2d)%b " "${CYAN}" "$i" "${NC}" >&2
+        _format_path_line "$path" >&2
+        printf "\n" >&2
         i=$((i + 1))
+        [ -t 1 ] && sleep 0.01
     done
-    printf "\n"
-    printf "Choice (number): "
+    printf "\n" >&2
+    printf "%bChoice (number): %b" "${BOLD}${WHITE}" "${NC}" >&2
     read -r pick
     if [ -n "$pick" ] && [ "$pick" -ge 1 ] 2>/dev/null && [ "$pick" -le "$total" ] 2>/dev/null; then
         sed -n "${pick}p" "$listfile"
@@ -126,15 +200,17 @@ _browse_all() {
 
     if command -v fzf >/dev/null 2>&1; then
         result=$(fzf \
-            --prompt="  Directory: " \
+            --prompt="  🔍 Directory: " \
             --height=60% \
             --border=rounded \
-            --header=" Browse all  |  Enter: select  |  Esc: cancel" \
-            --preview="ls --color=always {}" \
+            --color="fg:-1,bg:-1,hl:#5f87af,fg+:#ffffff,bg+:-1,hl+:#5fd7ff" \
+            --color="info:#af87ff,prompt:#5fff87,pointer:#ff5f87,marker:#ff5f87,spinner:#ff5f87" \
+            --header=" Browse all directories under $HOME (depth 3)" \
+            --preview="ls -F --color=always {}" \
             --preview-window=right:45%:border-left \
             < "$tmpfile" 2>/dev/null)
     else
-        printf "\n%b\n\n" "${BOLD}All directories under $HOME (depth 3):${NC}"
+        printf "\n%bAll directories under $HOME (depth 3):%b\n\n" "${BOLD}${MAGENTA}" "${NC}" >&2
         result=$(_menu_pick "$tmpfile")
     fi
 
@@ -159,22 +235,34 @@ _select_directory() {
 
     total=$(wc -l < "$tmpfile" | tr -d ' ')
 
-    printf "\n%b\n\n" "${BOLD}sortd${NC} — select a directory to organize"
+    printf "\n" >&2
+    printf "%b   ▲  s o r t d  v%s%b\n" "${BOLD}${CYAN}" "$VERSION" "${NC}" >&2
+    printf "%b   ──────────────────────────────────────────────────%b\n\n" "${DIM}${CYAN}" "${NC}" >&2
+    [ -t 1 ] && sleep 0.05
 
     i=1
     while [ "$i" -le "$total" ]; do
-        printf "  %b%d)%b %s\n" "$BOLD" "$i" "$NC" "$(sed -n "${i}p" "$tmpfile")"
+        path=$(sed -n "${i}p" "$tmpfile")
+        printf "  %b%2d)%b " "${CYAN}" "$i" "${NC}" >&2
+        _format_path_line "$path" >&2
+        printf "\n" >&2
         i=$((i + 1))
+        [ -t 1 ] && sleep 0.01
     done
-    printf "  %ba)%b Browse all directories\n" "$BOLD" "$NC"
-    printf "  %bm)%b Enter path manually\n\n" "$BOLD" "$NC"
-    printf "Choice: "
+
+    printf "  %b a)%b 🔍 Browse all directories\n" "${MAGENTA}" "${NC}" >&2
+    [ -t 1 ] && sleep 0.01
+    printf "  %b m)%b ✏️  Enter path manually\n\n" "${MAGENTA}" "${NC}" >&2
+    [ -t 1 ] && sleep 0.01
+
+    printf "%bChoice: %b" "${BOLD}${WHITE}" "${NC}" >&2
     read -r choice
 
+    result=""
     case "$choice" in
         a) result=$(_browse_all) ;;
         m)
-            printf "Path: "
+            printf "%bPath: %b" "${BOLD}${WHITE}" "${NC}" >&2
             read -r result
             ;;
         *)
