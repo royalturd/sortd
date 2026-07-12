@@ -9,6 +9,10 @@
 [![Version](https://img.shields.io/badge/version-2.0.0-orange.svg)](#)
 [![CI](https://github.com/royalturd/sortd/actions/workflows/ci.yml/badge.svg)](https://github.com/royalturd/sortd/actions/workflows/ci.yml)
 
+<br/>
+
+![sortd preview](preview.gif)
+
 </div>
 
 ---
@@ -181,3 +185,7 @@ sortd --update
 ## License
 
 [GPL-3.0](LICENSE)
+
+
+Created by [royalturd](https://github.com/royalturd)
+
