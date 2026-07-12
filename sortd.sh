@@ -21,6 +21,7 @@ FILELIST=""
 # Cleanup
 # ---------------------------------------------------------------------------
 
+# shellcheck disable=SC2317
 cleanup() { rm -f "$FILELIST"; }
 trap cleanup EXIT INT TERM
 
@@ -198,7 +199,9 @@ if [ -z "$TARGET_DIR" ]; then
 fi
 
 case "$TARGET_DIR" in
+    # shellcheck disable=SC2088
     "~")    TARGET_DIR="$HOME" ;;
+    # shellcheck disable=SC2088
     "~/"*)  TARGET_DIR="$HOME/${TARGET_DIR#~/}" ;;
 esac
 
