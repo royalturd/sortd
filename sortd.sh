@@ -76,6 +76,10 @@ update_tool() {
         die "curl or wget is required to update."
     fi
 
+    [ -s "$tmpfile" ] || { rm -f "$tmpfile"; die "Downloaded update is empty."; }
+    head -n 1 "$tmpfile" | grep -q '^#!/bin/sh' || { rm -f "$tmpfile"; die "Downloaded update failed validation."; }
+    sh -n "$tmpfile" 2>/dev/null || { rm -f "$tmpfile"; die "Downloaded update has a syntax error."; }
+
     mv "$tmpfile" "$SELF_PATH"
     chmod +x "$SELF_PATH"
     ok "sortd updated successfully to the latest version!"
@@ -178,14 +182,13 @@ _menu_pick() {
     listfile=$1
     total=$(wc -l < "$listfile" | tr -d ' ')
     i=1
-    while [ "$i" -le "$total" ]; do
-        path=$(sed -n "${i}p" "$listfile")
+    while IFS= read -r path; do
         printf "  %b%2d)%b " "${CYAN}" "$i" "${NC}" >&2
         _format_path_line "$path" >&2
         printf "\n" >&2
         i=$((i + 1))
-        [ -t 1 ] && sleep 0.01
-    done
+        [ -t 1 ] && [ "$total" -le 20 ] && sleep 0.01
+    done < "$listfile"
     printf "\n" >&2
     printf "%bChoice (number): %b" "${BOLD}${WHITE}" "${NC}" >&2
     read -r pick
@@ -406,10 +409,20 @@ while IFS= read -r filepath; do
             fi
         else
             ts=$(date +%Y%m%d_%H%M%S)
+            suffix="$ts"
+            n=1
             case "$filename" in
-                *.*) newname="${filename%.*}_${ts}.${ext}" ;;
-                *)   newname="${filename}_${ts}" ;;
+                *.*) newname="${filename%.*}_${suffix}.${ext}" ;;
+                *)   newname="${filename}_${suffix}" ;;
             esac
+            while [ -e "$dest_dir/$newname" ]; do
+                suffix="${ts}_${n}"
+                case "$filename" in
+                    *.*) newname="${filename%.*}_${suffix}.${ext}" ;;
+                    *)   newname="${filename}_${suffix}" ;;
+                esac
+                n=$((n + 1))
+            done
             if [ "$DRY_RUN" = true ]; then
                 verbose "[dry-run] RENAME  $filename  →  $category/$newname"
             elif mv -- "$filepath" "$dest_dir/$newname" 2>/dev/null; then
